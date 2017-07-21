@@ -1,16 +1,14 @@
 {
-  "name": "het-nieuwe-project",
+  "name": "padevents",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "start": "NODE_ENV=development webpack --colors --watch"
+    "start": "NODE_ENV=development webpack --colors --watch",
+    "build": "BUILD_TARGET=./build NODE_ENV=production webpack --optimize-minimize"
   },
   "author": "",
   "license": "MIT",
-  "dependencies": {
-    "uuid": "^3.1.0"
-  },
   "devDependencies": {
     "babel-core": "6.21.0",
     "babel-loader": "6.2.10",

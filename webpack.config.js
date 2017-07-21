@@ -4,7 +4,10 @@ module.exports = {
   entry: "./src/index.js",
   output: {
     path: process.env.BUILD_TARGET || "./build",
-    filename: "index.js"
+    filename: process.env.NODE_ENV === "development"
+      ? "index.js" : "padevents-dist-min.js",
+    library: "padEvents",
+    libraryTarget: "umd"
   },
   plugins: [
     new webpack.DefinePlugin({
