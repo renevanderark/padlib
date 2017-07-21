@@ -6,16 +6,11 @@ const padEvents = [
   "l-axis", "r-axis"
 ].reduce((acc, cur) => {
     acc[cur] = {
-      pressed: new Event(`gamepad-${cur}-pressed`),
-      released: new Event(`gamepad-${cur}-released`)
+      pressed: `gamepad-${cur}-pressed`,
+      released: `gamepad-${cur}-released`
     };
     return acc;
 }, {});
-
-Object.keys(padEvents).forEach((cur) => {
-  window.addEventListener(`gamepad-${cur}-pressed`, console.log);
-  window.addEventListener(`gamepad-${cur}-released`, console.log);
-});
 
 const knownMappings = {
   "046d-c216-Logitech Dual Action": {
@@ -63,10 +58,10 @@ function dispatchPadEvents() {
 
       if (buttonMapping && buttonstates[idx][buttonMapping] !== pressed) {
         buttonstates[idx][buttonMapping] = pressed;
-        window.dispatchEvent(padEvents[buttonMapping][pressed ? "pressed" : "released"]);
-      }
-      if (pressed) {
-        console.log(i, value,buttonMapping);
+        window.dispatchEvent(new CustomEvent(
+          padEvents[buttonMapping][pressed ? "pressed" : "released"],
+          {detail: {controllerIndex: idx}}
+        ));
       }
     }
 
@@ -78,6 +73,11 @@ function dispatchPadEvents() {
 
 dispatchPadEvents();
 
-window.addEventListener("keypressed", console.log);
 window.addEventListener("gamepadconnected", registerController);
 window.addEventListener("gamepaddisconnected", removeController);
+Object.keys(padEvents).forEach((cur) => {
+  window.addEventListener(`gamepad-${cur}-pressed`, (ev) =>
+    console.log(`Controller ${ev.detail.controllerIndex} pressed: ${cur}`));
+  window.addEventListener(`gamepad-${cur}-released`, (ev) =>
+    console.log(`Controller ${ev.detail.controllerIndex} released: ${cur}`));
+});

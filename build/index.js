@@ -48,16 +48,11 @@
 
 	var padEvents = ["a", "b", "x", "y", "start", "select", "rt-shoulder", "rb-shoulder", "lt-shoulder", "lb-shoulder", "l-axis", "r-axis"].reduce(function (acc, cur) {
 	  acc[cur] = {
-	    pressed: new Event("gamepad-" + cur + "-pressed"),
-	    released: new Event("gamepad-" + cur + "-released")
+	    pressed: "gamepad-" + cur + "-pressed",
+	    released: "gamepad-" + cur + "-released"
 	  };
 	  return acc;
 	}, {});
-
-	Object.keys(padEvents).forEach(function (cur) {
-	  window.addEventListener("gamepad-" + cur + "-pressed", console.log);
-	  window.addEventListener("gamepad-" + cur + "-released", console.log);
-	});
 
 	var knownMappings = {
 	  "046d-c216-Logitech Dual Action": {
@@ -111,10 +106,7 @@
 
 	      if (buttonMapping && buttonstates[idx][buttonMapping] !== pressed) {
 	        buttonstates[idx][buttonMapping] = pressed;
-	        window.dispatchEvent(padEvents[buttonMapping][pressed ? "pressed" : "released"]);
-	      }
-	      if (pressed) {
-	        console.log(i, value, buttonMapping);
+	        window.dispatchEvent(new CustomEvent(padEvents[buttonMapping][pressed ? "pressed" : "released"], { detail: { controllerIndex: idx } }));
 	      }
 	    }
 	  }
@@ -124,9 +116,16 @@
 
 	dispatchPadEvents();
 
-	window.addEventListener("keypressed", console.log);
 	window.addEventListener("gamepadconnected", registerController);
 	window.addEventListener("gamepaddisconnected", removeController);
+	Object.keys(padEvents).forEach(function (cur) {
+	  window.addEventListener("gamepad-" + cur + "-pressed", function (ev) {
+	    return console.log("Controller " + ev.detail.controllerIndex + " pressed: " + cur);
+	  });
+	  window.addEventListener("gamepad-" + cur + "-released", function (ev) {
+	    return console.log("Controller " + ev.detail.controllerIndex + " released: " + cur);
+	  });
+	});
 
 /***/ }
 /******/ ]);
