@@ -46,6 +46,8 @@
 
 	"use strict";
 
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 	var padEvents = ["a", "b", "x", "y", "start", "select", "rt-shoulder", "rb-shoulder", "lt-shoulder", "lb-shoulder", "l-axis", "r-axis"].reduce(function (acc, cur) {
 	  acc[cur] = {
 	    pressed: "gamepad-" + cur + "-pressed",
@@ -54,22 +56,29 @@
 	  return acc;
 	}, {});
 
-	var knownMappings = {
-	  "046d-c216-Logitech Dual Action": {
-	    "0": "x",
-	    "1": "a",
-	    "2": "b",
-	    "3": "y",
-	    "9": "start",
-	    "8": "select",
-	    "5": "rt-shoulder",
-	    "7": "rb-shoulder",
-	    "4": "lt-shoulder",
-	    "6": "lb-shoulder",
-	    "10": "l-axis",
-	    "11": "r-axis"
-	  }
+	var defaultMappings = {
+	  "0": "x",
+	  "1": "a",
+	  "2": "b",
+	  "3": "y",
+	  "9": "start",
+	  "8": "select",
+	  "5": "rt-shoulder",
+	  "7": "rb-shoulder",
+	  "4": "lt-shoulder",
+	  "6": "lb-shoulder",
+	  "10": "l-axis",
+	  "11": "r-axis",
+	  "12": "up",
+	  "13": "down",
+	  "14": "left",
+	  "15": "right"
 	};
+
+	var knownMappings = {
+	  "046d-c216-Logitech Dual Action": _extends({}, defaultMappings)
+	};
+
 	var controllers = {};
 	var keymaps = {};
 	var buttonstates = {};
@@ -83,7 +92,7 @@
 
 	var registerController = function registerController(ev) {
 	  controllers[ev.gamepad.index] = ev.gamepad;
-	  keymaps[ev.gamepad.index] = knownMappings[ev.gamepad.id] || {};
+	  keymaps[ev.gamepad.index] = knownMappings[ev.gamepad.id] || defaultMappings;
 	  buttonstates[ev.gamepad.index] = initButtonStates(keymaps[ev.gamepad.index]);
 	};
 
@@ -108,6 +117,10 @@
 	        buttonstates[idx][buttonMapping] = pressed;
 	        window.dispatchEvent(new CustomEvent(padEvents[buttonMapping][pressed ? "pressed" : "released"], { detail: { controllerIndex: idx } }));
 	      }
+
+	      if (pressed && !buttonMapping) {
+	        console.log("unmapped", i);
+	      }
 	    }
 	  }
 
@@ -120,7 +133,10 @@
 	window.addEventListener("gamepaddisconnected", removeController);
 	Object.keys(padEvents).forEach(function (cur) {
 	  window.addEventListener("gamepad-" + cur + "-pressed", function (ev) {
-	    return console.log("Controller " + ev.detail.controllerIndex + " pressed: " + cur);
+	    console.log("Controller " + ev.detail.controllerIndex + " pressed: " + cur);
+	    console.log(JSON.stringify(controllers[0].buttons.map(function (b) {
+	      return b.pressed;
+	    })));
 	  });
 	  window.addEventListener("gamepad-" + cur + "-released", function (ev) {
 	    return console.log("Controller " + ev.detail.controllerIndex + " released: " + cur);

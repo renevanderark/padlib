@@ -12,22 +12,32 @@ const padEvents = [
     return acc;
 }, {});
 
+const defaultMappings = {
+  "0": "x",
+  "1": "a",
+  "2": "b",
+  "3": "y",
+  "9": "start",
+  "8": "select",
+  "5": "rt-shoulder",
+  "7": "rb-shoulder",
+  "4": "lt-shoulder",
+  "6": "lb-shoulder",
+  "10": "l-axis",
+  "11": "r-axis",
+  "12": "up",
+  "13": "down",
+  "14": "left",
+  "15": "right"
+};
+
 const knownMappings = {
   "046d-c216-Logitech Dual Action": {
-    "0": "x",
-    "1": "a",
-    "2": "b",
-    "3": "y",
-    "9": "start",
-    "8": "select",
-    "5": "rt-shoulder",
-    "7": "rb-shoulder",
-    "4": "lt-shoulder",
-    "6": "lb-shoulder",
-    "10": "l-axis",
-    "11": "r-axis"
+    ...defaultMappings
   }
 };
+
+
 let controllers = {};
 let keymaps = {};
 let buttonstates = {}
@@ -40,7 +50,7 @@ const initButtonStates = (keymap) =>
 
 const registerController = (ev) => {
   controllers[ev.gamepad.index] = ev.gamepad;
-  keymaps[ev.gamepad.index] = knownMappings[ev.gamepad.id] || {};
+  keymaps[ev.gamepad.index] = knownMappings[ev.gamepad.id] || defaultMappings;
   buttonstates[ev.gamepad.index] = initButtonStates(keymaps[ev.gamepad.index]);
 }
 
@@ -63,6 +73,10 @@ function dispatchPadEvents() {
           {detail: {controllerIndex: idx}}
         ));
       }
+
+      if (pressed && !buttonMapping) {
+        console.log("unmapped", i)
+      }
     }
 
 
@@ -76,8 +90,10 @@ dispatchPadEvents();
 window.addEventListener("gamepadconnected", registerController);
 window.addEventListener("gamepaddisconnected", removeController);
 Object.keys(padEvents).forEach((cur) => {
-  window.addEventListener(`gamepad-${cur}-pressed`, (ev) =>
-    console.log(`Controller ${ev.detail.controllerIndex} pressed: ${cur}`));
+  window.addEventListener(`gamepad-${cur}-pressed`, (ev) => {
+    console.log(`Controller ${ev.detail.controllerIndex} pressed: ${cur}`)
+    console.log(JSON.stringify(controllers[0].buttons.map(b => b.pressed)))
+  });
   window.addEventListener(`gamepad-${cur}-released`, (ev) =>
     console.log(`Controller ${ev.detail.controllerIndex} released: ${cur}`));
 });
