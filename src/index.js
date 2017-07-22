@@ -13,6 +13,12 @@ Object.keys(padEvents).forEach((cur) => {
 */
 const initPadEvents = (
   onUnmappedButton = i => console.warn("unmapped button index", i),
+  axisMappings = {
+    "0": ["l-axis", 0],
+    "1": ["l-axis", 1],
+    "2": ["r-axis", 0],
+    "3": ["r-axis", 1]
+  },
   defaultMappings = {
     "0": "x",
     "1": "a",
@@ -36,11 +42,7 @@ const initPadEvents = (
     "start", "select",
     "rt-shoulder", "rb-shoulder",
     "lt-shoulder", "lb-shoulder",
-    "l-axis", "r-axis",
-    "l-axis-left", "l-axis-right",
-    "l-axis-up", "l-axis-down",
-    "r-axis-left", "r-axis-right",
-    "r-axis-up", "r-axis-down"
+    "l-axis", "r-axis"
   ].reduce((acc, cur) => {
       acc[cur] = {
         pressed: `gamepad-${cur}-pressed`,
@@ -101,8 +103,25 @@ const initPadEvents = (
       for (let i in controller.axes) {
         const current = calibrateAxisValue(controller.axes[i],  axisCalibrations[idx][i]);
         if (current !== axisStates[idx][i]) {
-          console.log(current, i);
+          const [axName, dir] = axisMappings[i];
+          if (dir === 0) {
+            window.dispatchEvent(new CustomEvent(
+              `gamepad-${axName}-x-change`, { detail: {
+                  controllerIndex: idx,
+                  force: current,
+                  measured: controller.axes[i],
+                  rounded: roundOffAxisValue(controller.axes[i])
+                }
+              })
+            );
+          } else {
+            window.dispatchEvent(new CustomEvent(
+              `gamepad-${axName}-y-change`,
+              {detail: {controllerIndex: idx, force: Math.abs(current), measured: controller.axes[i]}}
+            ));
+          }
           axisStates[idx][i] = current;
+
         }
       }
 
@@ -116,9 +135,6 @@ const initPadEvents = (
             padEvents[buttonMapping][pressed ? "pressed" : "released"],
             {detail: {controllerIndex: idx}}
           ));
-          console.log(axisStates[idx],
-            controller.axes.map((axis, j) =>
-             calibrateAxisValue(axis,  axisCalibrations[idx][j])));
         }
 
         if (onUnmappedButton && pressed && !buttonMapping) {
@@ -126,7 +142,6 @@ const initPadEvents = (
         }
       }
     }
-
     requestAnimationFrame(dispatchPadEvents);
   }
 
@@ -135,7 +150,13 @@ const initPadEvents = (
 
   window.addEventListener("gamepadconnected", registerController);
   window.addEventListener("gamepaddisconnected", removeController);
-  return padEvents;
+  return Object.keys(padEvents)
+  .map(x => [`gamepad-${x}-pressed`, `gamepad-${x}-released`])
+  .reduce((a,b) => a.concat(b))
+  .concat([
+    "gamepad-l-axis-x-change", "gamepad-l-axis-y-change",
+    "gamepad-r-axis-x-change", "gamepad-r-axis-y-change"
+  ]);
 }
 
 module.exports = { initPadEvents: initPadEvents }
