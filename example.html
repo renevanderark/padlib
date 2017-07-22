@@ -1,0 +1,17 @@
+<html>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+</head>
+<body style="margin: 0; padding: 0; width: 100%; height: 100%">
+<script src="https://cdn.rawgit.com/renevanderark/padlib/04565c77/build/padevents-dist-min.js"></script>
+<script>
+ var evs = padEvents.initPadEvents();
+ evs.forEach(function(x) {
+	window.addEventListener(x, function(ev) {
+		console.log(x, ev.detail);
+	});
+ });
+</script>
+</body>
+</html>

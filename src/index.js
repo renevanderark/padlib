@@ -39,7 +39,7 @@ const initPadEvents = (
 
   const padEvents = [
     "a", "b", "x", "y",
-    "start", "select",
+    "start", "select", "up", "down", "left", "right",
     "rt-shoulder", "rb-shoulder",
     "lt-shoulder", "lb-shoulder",
     "l-axis", "r-axis"
@@ -93,7 +93,6 @@ const initPadEvents = (
   function dispatchPadEvents() {
     for (let idx in controllers) {
       const controller = controllers[idx];
-
       if (axisCalibrations[idx].length === 0) {
         axisCalibrations[idx] = controller.axes.map(axis => roundOffAxisValue(axis))
         axisStates[idx] = controller.axes.map((axis, j) =>
@@ -147,6 +146,20 @@ const initPadEvents = (
 
   dispatchPadEvents();
 
+  function scangamepads() {
+    var gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads() : []);
+    for (var i = 0; i < gamepads.length; i++) {
+      if (gamepads[i]) {
+        if (!(gamepads[i].index in controllers)) {
+          registerController({gamepad: gamepads[i]});
+        }
+      }
+    }
+  }
+  const haveEvents = 'ongamepadconnected' in window;
+  if (!haveEvents) {
+    setInterval(scangamepads, 50);
+  }
 
   window.addEventListener("gamepadconnected", registerController);
   window.addEventListener("gamepaddisconnected", removeController);
