@@ -64,10 +64,13 @@ const initPadEvents = (
   const roundOffAxisValue = (axis) =>
     Math.round(axis * 100);
 
-  const calibrateAxisValue = (axis, calib) =>
-    axis === 1.0 ? 100 :
-      axis === -1.0 ? -100 :
-       roundOffAxisValue(axis) - calib;
+  const calibrateAxisValue = (axis, calib) => {
+    if (axis === 1.0) { return 100; }
+    if (axis === -1.0) { return -100; }
+    const rounded = roundOffAxisValue(axis) - calib;
+    if (rounded < 20 && rounded > -20) { return 0; }
+    return rounded < 0 ? -50 : 50;
+  }
 
   const registerController = (ev) => {
     controllers[ev.gamepad.index] = ev.gamepad;
@@ -93,7 +96,14 @@ const initPadEvents = (
         axisCalibrations[idx] = controller.axes.map(axis => roundOffAxisValue(axis))
         axisStates[idx] = controller.axes.map((axis, j) =>
           calibrateAxisValue(axis,  axisCalibrations[idx][j]));
+      }
 
+      for (let i in controller.axes) {
+        const current = calibrateAxisValue(controller.axes[i],  axisCalibrations[idx][i]);
+        if (current !== axisStates[idx][i]) {
+          console.log(current, i);
+          axisStates[idx][i] = current;
+        }
       }
 
       for (let i in controller.buttons) {
