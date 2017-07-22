@@ -36,7 +36,11 @@ const initPadEvents = (
     "start", "select",
     "rt-shoulder", "rb-shoulder",
     "lt-shoulder", "lb-shoulder",
-    "l-axis", "r-axis"
+    "l-axis", "r-axis",
+    "l-axis-left", "l-axis-right",
+    "l-axis-up", "l-axis-down",
+    "r-axis-left", "r-axis-right",
+    "r-axis-up", "r-axis-down"
   ].reduce((acc, cur) => {
       acc[cur] = {
         pressed: `gamepad-${cur}-pressed`,
@@ -47,7 +51,9 @@ const initPadEvents = (
 
   let controllers = {};
   let keymaps = {};
-  let buttonstates = {}
+  let buttonstates = {};
+  let axisStates = {};
+  let axisCalibrations = {};
 
   const initButtonStates = (keymap) =>
     Object.keys(keymap).reduce((acc, cur) => {
@@ -55,19 +61,40 @@ const initPadEvents = (
       return acc;
     }, {});
 
+  const roundOffAxisValue = (axis) =>
+    Math.round(axis * 100);
+
+  const calibrateAxisValue = (axis, calib) =>
+    axis === 1.0 ? 100 :
+      axis === -1.0 ? -100 :
+       roundOffAxisValue(axis) - calib;
+
   const registerController = (ev) => {
     controllers[ev.gamepad.index] = ev.gamepad;
     keymaps[ev.gamepad.index] = Object.assign({}, defaultMappings);
     buttonstates[ev.gamepad.index] = initButtonStates(keymaps[ev.gamepad.index]);
+    axisStates[ev.gamepad.index] = ev.gamepad.axes.map(axis => roundOffAxisValue(axis));
+    axisCalibrations[ev.gamepad.index] = [];
   }
 
   const removeController = ({gamepad}) => {
     delete controllers[gamepad.index];
+    delete keymaps[gamepad.index];
+    delete buttonstates[gamepad.index];
+    delete axisStates[gamepad.index];
+    delete axisCalibrations[gamepad.index];
   }
 
   function dispatchPadEvents() {
     for (let idx in controllers) {
       const controller = controllers[idx];
+
+      if (axisCalibrations[idx].length === 0) {
+        axisCalibrations[idx] = controller.axes.map(axis => roundOffAxisValue(axis))
+        axisStates[idx] = controller.axes.map((axis, j) =>
+          calibrateAxisValue(axis,  axisCalibrations[idx][j]));
+
+      }
 
       for (let i in controller.buttons) {
         const { pressed } = controller.buttons[i];
@@ -79,6 +106,9 @@ const initPadEvents = (
             padEvents[buttonMapping][pressed ? "pressed" : "released"],
             {detail: {controllerIndex: idx}}
           ));
+          console.log(axisStates[idx],
+            controller.axes.map((axis, j) =>
+             calibrateAxisValue(axis,  axisCalibrations[idx][j])));
         }
 
         if (onUnmappedButton && pressed && !buttonMapping) {
